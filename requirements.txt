@@ -1,0 +1,12 @@
+langchain
+langchain-google-vertexai
+langchain-community
+langchain-huggingface
+langgraph
+python-dotenv
+pypdf
+faiss-cpu
+unstructured
+unstructured-client
+unstructured[pdf]
+python-magic
