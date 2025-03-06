@@ -1,7 +1,13 @@
-from langchain_community.document_loaders import PyPDFLoader
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+from langchain_community.document_loaders import PDFPlumberLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain_mistralai import MistralAIEmbeddings
 from pathlib import Path
 from config import Config as cfg
 
@@ -12,12 +18,13 @@ class VectorStoreManager:
         self.docs = []
         self.chunks = []
         self.vector_store = None
+        self.embeddings = MistralAIEmbeddings(model=cfg.EMBEDDING_MODEL)
 
     def _load_documents(self):
         pdf_files = list(Path(self.documents_path).glob('*.pdf'))
         for pdf_file in pdf_files:
             try:
-                loader = PyPDFLoader(str(pdf_file))
+                loader = PDFPlumberLoader(str(pdf_file))
                 self.docs.extend(loader.load())
             except Exception as e:
                 print(f"Error loading {pdf_file}: {e}")
@@ -35,12 +42,7 @@ class VectorStoreManager:
     def load_or_generate_vector_store(self):
         if Path(self.vector_store_path).exists():
             print(f'Loading existing vector store from {self.vector_store_path}')
-            self.vector_store = FAISS.load_local(self.vector_store_path, HuggingFaceBgeEmbeddings(
-                model_name=cfg.HUGGINGFACE_MODEL_NAME,
-                encode_kwargs={'normalize_embeddings': True},
-            ),
-            allow_dangerous_deserialization=True
-            )
+            self.vector_store = FAISS.load_local(self.vector_store_path, self.embeddings,allow_dangerous_deserialization=True)
         else:
             print('Vector store not found. Generating new one...')
             self._load_documents()
@@ -48,26 +50,22 @@ class VectorStoreManager:
             self._generate_vector_store()
 
     def _generate_vector_store(self):
-        embedding_model = HuggingFaceBgeEmbeddings(
-            model_name=cfg.HUGGINGFACE_MODEL_NAME,
-            encode_kwargs={'normalize_embeddings': True}
-        )
-        self.vector_store = FAISS.from_documents(self.chunks, embedding_model)
+        self.vector_store = FAISS.from_documents(self.chunks, self.embeddings)
         self.vector_store.save_local(self.vector_store_path)
         print(f'Vector store saved to {self.vector_store_path}')
 
-# Example usage:
-if __name__ == "__main__":
-    manager = VectorStoreManager()
-    manager.load_or_generate_vector_store()
+# # Example usage:
+# if __name__ == "__main__":
+#     manager = VectorStoreManager()
+#     manager.load_or_generate_vector_store()
 
-    # Test search
-    if manager.vector_store:
-        #print(manager.vector_store.search('Who is the professor of the course?', top_k=1, search_type='similarity'))
-        while True:
-            query = input("Enter a query (q to quit): ")
-            if query == 'q':
-                break
-            docs = manager.vector_store.similarity_search(query, top_k=5)
-            for doc in docs:
-                print(f'Source: {doc.metadata['source']}, Page: {doc.metadata["page"]}: {doc.page_content[:1000]}\n')
+#     # Test search
+#     if manager.vector_store:
+#         #print(manager.vector_store.search('Who is the professor of the course?', top_k=1, search_type='similarity'))
+#         while True:
+#             query = input("Enter a query (q to quit): ")
+#             if query == 'q':
+#                 break
+#             docs = manager.vector_store.similarity_search(query, top_k=3)
+#             for doc in docs:
+#                 print(f'\nSource: {doc.metadata['source']}, Page: {doc.metadata["page"]}: {doc.page_content}\n\n')

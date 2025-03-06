@@ -1,12 +1,9 @@
 langchain
-langchain-google-vertexai
+langchain-mistralai
 langchain-community
 langchain-huggingface
 langgraph
 python-dotenv
-pypdf
 faiss-cpu
-unstructured
-unstructured-client
-unstructured[pdf]
 python-magic
+pdfplumber
