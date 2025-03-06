@@ -5,16 +5,16 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 
 from core.chat_graph import ChatGraph
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import SystemMessage, HumanMessage, RemoveMessage
 
 # ==========================
 # ChatbotService: Exposes API for GUI
 # ==========================
 class ChatbotService:
-    def __init__(self):
+    def __init__(self, config={"configurable": {"thread_id": "abc123"}}):
         """Initialize chatbot components."""
         # self.retriever = Retriever()
-        self.chat_graph = ChatGraph()
+        self.app = ChatGraph()
         self.system_prompt = SystemMessage(
         '''You are an assistant for question-answering tasks about the Natural Language Processing and Large Language Models course of
         University of Salerno. Ask only question about this topic, use also the context (if available) retrieved from the documents to answer the question.
@@ -22,34 +22,40 @@ class ChatbotService:
         Always retrieve information before answering if the query is about NLP and Large Language Models or the course. Don't retrieve
         only if the query is not related to the course otherwise try to retrieve information.'''
     )
-        self.conversation_state = {"messages": [self.system_prompt]}
+        
+        # When we run the application, we pass in a configuration dict that specifies a thread_id. 
+        # This ID is used to distinguish conversational threads (e.g., between different users).
+        self.config = config
+
+        # Initialize conversation state with system prompt
+        self.app.graph.invoke({"messages": [self.system_prompt]}, self.config)
+
 
     def send_message(self, user_input: str):
         """Send a message to the chatbot and get a response."""
-        self.conversation_state["messages"].append({"role": "user", "content": user_input})
+        input_message = {"messages": [HumanMessage(user_input)]}
 
         # Process the query through the graph
         response = None
-        for step in self.chat_graph.graph.stream(self.conversation_state, stream_mode="values"):
+        for step in self.app.graph.stream(input_message, config=self.config, stream_mode="values"):
             response = step["messages"][-1]  # Get latest response
             response.pretty_print()
 
-        # Append response to conversation history
         if response:
-            self.conversation_state["messages"].append(response)
             return response  # Return only response text for GUI
         return "I'm sorry, I couldn't process your request."
     
-    # TODO: this is not working well
-    def stream_messages(self, user_input: str):
-        """Stream messages to the chatbot and get a response."""
-        self.conversation_state["messages"].append({"role": "user", "content": user_input})
+    # # TODO: this is not working well
+    # def stream_messages(self, user_input: str):
+    #     """Stream messages to the chatbot and get a response."""
+    #     self.conversation_state["messages"].append({"role": "user", "content": user_input})
 
-        return self.chat_graph.graph.astream(self.conversation_state, stream_mode="messages")
+    #     return self.chat_graph.graph.astream(self.conversation_state, stream_mode="messages")
     
     def reset_conversation(self):
         """Reset the conversation state."""
-        self.conversation_state = {"messages": [self.system_prompt]}
+        all_messages = self.app.graph.get_state(self.config).values["messages"]
+        self.app.graph.update_state(self.config, {"messages": [RemoveMessage(id=m.id) for m in all_messages if m.id != self.system_prompt.id]})
 
 # ==========================
 # Example use
@@ -61,6 +67,10 @@ if __name__ == "__main__":
         user_input = input("Enter a query (q to quit): ")
         if user_input.lower() == "q":
             break
+        if user_input.lower() == "r":
+            chatbot.reset_conversation()
+            print("Conversation reset.")
+            continue
 
         response = chatbot.send_message(user_input)
         # response.pretty_print()

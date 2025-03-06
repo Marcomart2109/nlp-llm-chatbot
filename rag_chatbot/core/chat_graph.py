@@ -10,6 +10,7 @@ from langchain_core.messages import SystemMessage
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain.chat_models import init_chat_model
 from langchain.tools import tool
+from langgraph.checkpoint.memory import MemorySaver
 from core.vector_store import VectorStoreManager
 from config import Config as cfg
 
@@ -33,6 +34,7 @@ class ChatGraph:
         """Initialize the conversation graph."""
         self.llm_client = init_chat_model(cfg.LLM_MODEL_NAME, model_provider=cfg.LLM_MODEL_PROVIDER)
         self.graph_builder = StateGraph(MessagesState)
+        self.memory = MemorySaver()
         self._build_graph()
 
     def _build_graph(self):
@@ -48,7 +50,7 @@ class ChatGraph:
         self.graph_builder.add_edge("tools", "generate_response")
         self.graph_builder.add_edge("generate_response", END)
 
-        self.graph = self.graph_builder.compile()
+        self.graph = self.graph_builder.compile(checkpointer=self.memory)
     
     def _safe_invoke(self, llm, input, max_retries=3):
         """Invoke the LLM with retries in case of network errors."""
