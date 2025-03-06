@@ -1,5 +1,6 @@
 import sys
 import os
+import uuid
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -11,7 +12,7 @@ from langchain_core.messages import SystemMessage, HumanMessage, RemoveMessage
 # ChatbotService: Exposes API for GUI
 # ==========================
 class ChatbotService:
-    def __init__(self, config={"configurable": {"thread_id": "abc123"}}):
+    def __init__(self):
         """Initialize chatbot components."""
         # self.retriever = Retriever()
         self.app = ChatGraph()
@@ -22,13 +23,18 @@ class ChatbotService:
         Always retrieve information before answering if the query is about NLP and Large Language Models or the course. Don't retrieve
         only if the query is not related to the course otherwise try to retrieve information.'''
     )
+        self.thread_id = self._generate_thread_id()
         
         # When we run the application, we pass in a configuration dict that specifies a thread_id. 
         # This ID is used to distinguish conversational threads (e.g., between different users).
-        self.config = config
+        self.config = {"configurable": {"thread_id": self.thread_id}}
 
         # Initialize conversation state with system prompt
         self.app.graph.invoke({"messages": [self.system_prompt]}, self.config)
+    
+    def _generate_thread_id(self):
+        """Generate a unique thread ID for each session."""
+        return str(uuid.uuid4())
 
 
     def send_message(self, user_input: str):
