@@ -13,8 +13,8 @@ This repository contains a chatbot designed for question-answering tasks about t
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/rag_chatbot_test.git
-    cd rag_chatbot_test
+    git clone https://github.com/Marcomart2109/nlp-llm-chatbot.git
+    cd nlp-llm-chatbot
     ```
 
 2. Create and activate a virtual environment:
