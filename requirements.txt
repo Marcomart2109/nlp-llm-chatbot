@@ -7,3 +7,4 @@ python-dotenv
 faiss-cpu
 python-magic
 pdfplumber
+langgraph
