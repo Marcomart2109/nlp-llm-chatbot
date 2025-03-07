@@ -2,6 +2,6 @@
 __pycache__/
 *.pyc
 *.pyo
-data/
 .DS_Store
 venv/
+data/vector_store
