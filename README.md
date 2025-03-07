@@ -32,6 +32,8 @@ This repository contains a chatbot designed for question-answering tasks about t
     - Create a `.env` file in the root directory.
     - Add the necessary environment variables as specified in `rag_chatbot/config.py`.
 
+5. **Important**: Make sure to agree to the terms of the gated repository `mistralai/Mixtral-8x7B-v0.1` on [this link](https://huggingface.co/mistralai/Mixtral-8x7B-v0.1) so the model in the code can download its tokenizer from the hub.
+
 ## 🚀 Usage (*for now*)
 
 1. Run the chatbot service:
