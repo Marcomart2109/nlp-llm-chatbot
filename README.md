@@ -13,7 +13,7 @@ This repository contains a chatbot designed for question-answering tasks about t
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/Marcomart2109/rag_chatbot_test.git
+    git clone git@github.com:Marcomart2109/nlp-llm-chatbot.git
     cd rag_chatbot_test
     ```
 
