@@ -2,7 +2,7 @@ import time
 import httpx
 from langgraph.graph import MessagesState, StateGraph
 from langchain_core.tools import tool
-from rag_chatbot.core.vector_store import VectorStoreManager
+from core.vector_store import VectorStoreManager
 from langchain.chat_models import init_chat_model
 # from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 
