@@ -4,3 +4,5 @@ __pycache__/
 *.pyo
 .DS_Store
 venv/
+data/documents/
+data/slides_and_syllabus/
