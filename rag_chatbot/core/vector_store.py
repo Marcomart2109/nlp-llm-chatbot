@@ -29,7 +29,12 @@ class VectorStoreManager:
             self.docs = []
             self.chunks = []
             self.vector_store = None
-            self.embeddings = MistralAIEmbeddings(model=cfg.EMBEDDING_MODEL)
+            # Mistral AI embeddings are norm 1 (cosine similarity, dot product or Euclidean distance are all equivalent).
+            # self.embeddings = MistralAIEmbeddings(model=cfg.MISTRAL_EMBEDDING_MODEL)
+            self.embeddings = HuggingFaceBgeEmbeddings(
+                model_name=cfg.HF_EMBEDDING_MODEL,
+                encode_kwargs={'normalize_embeddings': True}
+            )
             self._initialized = True  # Set the flag to True
 
     def _load_documents(self):
@@ -51,6 +56,7 @@ class VectorStoreManager:
         if Path(self.vector_store_path).exists():
             print(f'Loading existing vector store from {self.vector_store_path}')
             self.vector_store = FAISS.load_local(self.vector_store_path, self.embeddings, allow_dangerous_deserialization=True)
+            print(f'Vector store successfully loaded from {self.vector_store_path}')
         else:
             print('Vector store not found. Generating new one...')
             self._load_documents()

@@ -32,7 +32,10 @@ class APICallException(Exception):
 class ChatGraph:
     def __init__(self):
         """Initialize the conversation graph."""
-        self.llm_client = init_chat_model(cfg.LLM_MODEL_NAME, model_provider=cfg.LLM_MODEL_PROVIDER)
+        self.llm_client = init_chat_model(
+            cfg.LLM_MODEL_NAME, 
+            model_provider=cfg.LLM_MODEL_PROVIDER,
+            temperature=cfg.TEMPERATURE)
         self.graph_builder = StateGraph(MessagesState)
         self.memory = MemorySaver()
         self._build_graph()
@@ -83,7 +86,7 @@ class ChatGraph:
     @tool(response_format="content_and_artifact")
     def retrieve(query: str):
         """Retrieve relevant documents from the vector store."""
-        retrieved_docs = vector_store_manager.vector_store.similarity_search(query, k=3)
+        retrieved_docs = vector_store_manager.vector_store.similarity_search(query, k=cfg.TOP_K)
         serialized = "\n\n".join(
             (f"Source: {doc.metadata}\nContent: {doc.page_content}") for doc in retrieved_docs
         )
@@ -107,14 +110,11 @@ class ChatGraph:
         # Format into prompt
         docs_content = "\n\n".join(doc.content for doc in tool_messages)
 
-        # TODO: Maybe loading a prompt template from langchain hub
         system_message_content = (
-            "You are an assistant for question-answering tasks about the Natural Language Processing and Large Language Models course of"
-            "University of Salerno. Use the following pieces of retrieved context to answer "
-            "the question. If you don't know the answer, say that you "
-            "don't know without answering. Use three sentences maximum and keep the "
-            "answer concise."
-            "\n\n"
+            "Use only the retrieved context provided below to formulate your answer. "
+            "If the question is unrelated to this course material, clearly state: 'I can only answer questions related to the provided context.' "
+            "If the retrieved information does not contain an answer, say: 'The provided context does not contain enough information to answer this question.' "
+            "Do not provide speculative or external information. Keep your response concise and precise.\n\n"
             f"{docs_content}"
         )
         conversation_messages = [
