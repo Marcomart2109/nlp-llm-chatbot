@@ -4,5 +4,3 @@ __pycache__/
 *.pyo
 .DS_Store
 venv/
-data/vector_store
-data/slides_and_syllabus
