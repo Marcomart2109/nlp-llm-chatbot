@@ -15,7 +15,11 @@ def display_source_metadata(metadata):
     """Display metadata in a user-friendly format."""
     st.markdown("**Metadata:**")
     st.markdown(f"- **Author:** {metadata.get('Author', 'N/A')}")
-    st.markdown(f"- **Page:** {metadata.get('page', 'N/A')} of {metadata.get('total_pages', 'N/A')}")
+    page = metadata.get('page', None)
+    total_pages = metadata.get('total_pages', 'N/A')
+    if page is not None:
+        page += 1  # Adjust page number to start from 1
+    st.markdown(f"- **Page:** {page if page is not None else 'N/A'} of {total_pages}")
 
 
 def main():

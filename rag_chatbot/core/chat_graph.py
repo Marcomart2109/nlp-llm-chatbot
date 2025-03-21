@@ -86,7 +86,7 @@ class ChatGraph:
     @tool(response_format="content_and_artifact")
     def retrieve(query: str):
         """Retrieve relevant documents from the vector store."""
-        retrieved_docs = vector_store_manager.vector_store.similarity_search(query, k=cfg.TOP_K)
+        retrieved_docs = vector_store_manager.vector_store.similarity_search(query, k=cfg.TOP_K) # It is also possible to set a score threshold ex: score_threshold=0.8
         serialized = "\n\n".join(
             (f"Source: {doc.metadata}\nContent: {doc.page_content}") for doc in retrieved_docs
         )

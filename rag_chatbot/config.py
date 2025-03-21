@@ -8,6 +8,7 @@ class Config:
     # Get environment variables
     CHUNK_SIZE = 800
     CHUNK_OVERLAP = 80
+    MIN_CHUNK_LENGTH = 50
     TOP_K = 5
     DOCUMENTS_PATH = "data/slides_and_syllabus"
     VECTOR_STORE_PATH = "data/vector_store"

@@ -40,17 +40,65 @@ class VectorStoreManager:
     def _load_documents(self):
         pdf_files = list(Path(self.documents_path).glob('*.pdf'))
         for pdf_file in pdf_files:
+            filename = pdf_file.name
+            # We will esclude the first and the last page only for the slides
             try:
-                loader = PDFPlumberLoader(str(pdf_file))
-                self.docs.extend(loader.load())
+                # Check if the filename starts with a number
+                starts_with_number = filename[0].isdigit()
+                
+                if starts_with_number:
+                    # For documents starting with a number, load and skip first and last page
+                    import pdfplumber  # Import here to avoid circular imports
+                    
+                    # First, count the total pages
+                    with pdfplumber.open(str(pdf_file)) as pdf:
+                        total_pages = len(pdf.pages)
+                        if total_pages <= 2:  # Not enough pages to skip first and last
+                            print(f"Warning: {filename} has only {total_pages} pages, need at least 3 to skip first and last. Loading all pages.")
+                            loader = PDFPlumberLoader(str(pdf_file))
+                            self.docs.extend(loader.load())
+                        else:
+                            # Create a custom loader for specific pages (skip first and last)
+                            pages = []
+                            with pdfplumber.open(str(pdf_file)) as pdf:
+                                for i in range(1, total_pages - 1):  # Skip page 0 and the last page
+                                    page = pdf.pages[i]
+                                    text = page.extract_text()
+                                    # Create a Document object similar to what PDFPlumberLoader would create
+                                    from langchain_core.documents import Document
+                                    doc = Document(
+                                        page_content=text,
+                                        metadata={
+                                            "source": str(pdf_file),
+                                            "page": i,
+                                            "total_pages": total_pages
+                                        }
+                                    )
+                                    pages.append(doc)
+                            self.docs.extend(pages)
+                            print(f"Loaded {filename} - skipped first and last pages ({len(pages)} pages loaded)")
+                else:
+                    # For other documents, load all pages
+                    loader = PDFPlumberLoader(str(pdf_file))
+                    loaded_docs = loader.load()
+                    self.docs.extend(loaded_docs)
+                    print(f"Loaded {filename} - all pages ({len(loaded_docs)} pages loaded)")
+                    
             except Exception as e:
                 print(f"Error loading {pdf_file}: {e}")
+        
         print(f"Successfully loaded {len(self.docs)} documents.")
 
     def _split_documents(self):
+        """Split documents into chunks and filter out chunks that are too short."""
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=cfg.CHUNK_SIZE, chunk_overlap=cfg.CHUNK_OVERLAP)
-        self.chunks = text_splitter.split_documents(self.docs)
-        print(f'Before split: {len(self.docs)} pages, after split: {len(self.chunks)} chunks.')
+        all_chunks = text_splitter.split_documents(self.docs)
+        
+        # Filter chunks by minimum length
+        self.chunks = [chunk for chunk in all_chunks if len(chunk.page_content.strip()) >= cfg.MIN_CHUNK_LENGTH]
+        
+        print(f'Before split: {len(self.docs)} pages, after split: {len(all_chunks)} chunks.')
+        print(f'After length filtering: {len(self.chunks)} chunks (minimum {cfg.MIN_CHUNK_LENGTH} characters).')
 
     def load_or_generate_vector_store(self):
         if Path(self.vector_store_path).exists():
