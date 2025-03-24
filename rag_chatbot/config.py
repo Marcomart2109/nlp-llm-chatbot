@@ -10,7 +10,7 @@ class Config:
     CHUNK_OVERLAP = 80
     MIN_CHUNK_LENGTH = 50
     TOP_K = 5
-    DOCUMENTS_PATH = "data/slides_and_syllabus"
+    DOCUMENTS_PATH = "data/new_corpus"
     VECTOR_STORE_PATH = "data/vector_store"
     LLM_MODEL_NAME="mistral-large-latest"
     LLM_MODEL_PROVIDER="mistralai"
